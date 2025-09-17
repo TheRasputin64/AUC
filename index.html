@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUC Graduation Frame</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #2a2d3a; min-height: 100vh; color: #e8eaed; overflow-x: hidden; }
+        body.rtl { direction: rtl; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0.5rem; min-height: 100vh; display: flex; flex-direction: column; }
+        .header { text-align: center; padding: 1rem 0.5rem 1.5rem; position: relative; margin-bottom: 1rem; }
+        .header-controls { position: absolute; top: 0.5rem; left: 0.5rem; display: flex; gap: 1rem; align-items: center; }
+        .lang-switch { display: flex; gap: 0.25rem; background: #3d4155; border-radius: 12px; padding: 4px; }
+        .back-button { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: #8b9dc3; font-weight: 600; padding: 0.4rem 0.8rem; border-radius: 8px; background: #3d4155; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: none; font-size: 0.8rem; }
+        .back-button:hover { background: #4a5068; transform: translateX(-4px); }
+        .lang-btn { padding: 0.4rem 0.8rem; border: none; background: transparent; border-radius: 8px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 0.875rem; color: #a8adb8; font-weight: 500; }
+        .lang-btn:hover { background: #4a5068; }
+        .lang-btn.active { background: #8b9dc3; color: #2a2d3a; }
+        .main-title { font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 800; margin-bottom: 0.25rem; color: #dda15e; letter-spacing: -0.02em; line-height: 1.1; }
+        .subtitle { font-size: 1rem; color: #a8adb8; font-weight: 400; margin-bottom: 0.5rem; }
+        .selection-section { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1rem 0; }
+        .frame-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; max-width: 700px; width: 100%; }
+        .option-card { background: #3d4155; border-radius: 20px; padding: 2rem 1rem; text-align: center; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid transparent; position: relative; overflow: hidden; }
+        .option-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(139, 157, 195, 0.1); opacity: 0; transition: opacity 0.4s ease; }
+        .option-card:hover::before { opacity: 1; }
+        .option-card:hover { transform: translateY(-8px); border-color: #8b9dc3; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
+        .card-icon { font-size: 3rem; margin-bottom: 1rem; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; z-index: 1; }
+        .option-card:hover .card-icon { transform: scale(1.15); }
+        .option-card h3 { font-size: 1.3rem; margin-bottom: 0.5rem; font-weight: 700; color: #e8eaed; position: relative; z-index: 1; }
+        .option-card p { color: #a8adb8; font-size: 0.9rem; position: relative; z-index: 1; }
+        .editor-section { flex: 1; padding: 0.5rem 0; }
+        .editor-content { display: flex; flex-direction: column; gap: 1rem; max-width: 1200px; margin: 0 auto; }
+        .controls-top { display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; }
+        .frame-selector { display: flex; gap: 1rem; align-items: center; background: #3d4155; padding: 0.75rem; border-radius: 16px; flex-wrap: wrap; justify-content: center; }
+        .frame-selector span { color: #e8eaed; font-weight: 600; margin-right: 0.5rem; }
+        #frameOptions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .frame-option { width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: #4a5068; }
+        .frame-option.active { border-color: #dda15e; transform: scale(1.1); }
+        .frame-option:hover { transform: scale(1.05); }
+        .frame-option img { width: 100%; height: 100%; object-fit: cover; }
+        .upload-area { border: 2px dashed #5a6275; border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: #3d4155; margin-bottom: 1rem; }
+        .upload-area.small { padding: 0.75rem; display: flex; align-items: center; justify-content: space-between; text-align: left; }
+        .upload-area:hover { border-color: #8b9dc3; background: #4a5068; }
+        .upload-area.dragover { border-color: #dda15e; background: #4a5068; }
+        .upload-content { display: flex; flex-direction: column; align-items: center; }
+        .upload-area.small .upload-content { flex-direction: row; gap: 0.75rem; flex: 1; }
+        .upload-icon { font-size: 2rem; color: #8b9dc3; margin-bottom: 0.75rem; }
+        .upload-area.small .upload-icon { font-size: 1.2rem; margin-bottom: 0; }
+        .upload-text { font-size: 1rem; margin-bottom: 0.25rem; color: #e8eaed; font-weight: 600; }
+        .upload-area.small .upload-text { font-size: 0.9rem; margin-bottom: 0; }
+        .upload-subtext { color: #a8adb8; font-size: 0.8rem; }
+        .upload-area.small .upload-subtext { display: none; }
+        .file-info { display: flex; align-items: center; gap: 0.5rem; color: #a8adb8; font-size: 0.8rem; }
+        .upload-actions { display: flex; gap: 0.5rem; }
+        .upload-btn { padding: 0.4rem 0.8rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; display: flex; align-items: center; gap: 0.4rem; }
+        .upload-btn.primary { background: #dda15e; color: #2a2d3a; }
+        .upload-btn.secondary { background: #5a6275; color: #e8eaed; }
+        .upload-btn:hover { transform: translateY(-1px); }
+        .canvas-area { display: flex; gap: 2rem; align-items: start; justify-content: center; flex-wrap: wrap; }
+        .canvas-container { position: relative; background: #4a5068; border-radius: 12px; overflow: hidden; }
+        .canvas-container.individual { width: 350px; height: 350px; }
+        .canvas-container.group { width: 500px; height: 281px; }
+        .image-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+        .image-layer img { position: absolute; top: 50%; left: 50%; width: 100%; height: 100%; object-fit: cover; transform: translate(-50%, -50%); transition: transform 0.1s ease; }
+        .frame-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+        .frame-layer img { width: 100%; height: 100%; object-fit: cover; }
+        .canvas-wrapper { position: relative; display: inline-block; }
+        .position-controls { position: absolute; }
+        .position-controls.top { top: -35px; left: 50%; transform: translateX(-50%); }
+        .position-controls.bottom { bottom: -35px; left: 50%; transform: translateX(-50%); }
+        .position-controls.left { left: -35px; top: 50%; transform: translateY(-50%); }
+        .position-controls.right { right: -35px; top: 50%; transform: translateY(-50%); }
+        .position-btn { width: 30px; height: 30px; border: none; border-radius: 50%; cursor: pointer; background: #dda15e; color: #2a2d3a; font-size: 0.8rem; font-weight: bold; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; }
+        .position-btn:hover { background: #c8956d; transform: scale(1.1); }
+        .controls-panel { background: #3d4155; border-radius: 12px; padding: 1rem; min-width: 250px; }
+        .control-group { margin-bottom: 1rem; }
+        .control-label { display: block; margin-bottom: 0.75rem; font-weight: 600; color: #e8eaed; font-size: 0.9rem; }
+        .control-slider { width: 100%; height: 6px; border-radius: 3px; background: #5a6275; appearance: none; outline: none; }
+        .control-slider::-webkit-slider-thumb { appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #dda15e; cursor: pointer; }
+        .control-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #dda15e; cursor: pointer; border: none; }
+        .action-buttons { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-family: inherit; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 0.9rem; }
+        .btn-primary { background: #dda15e; color: #2a2d3a; }
+        .btn-primary:hover { background: #c8956d; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(221, 161, 94, 0.3); }
+        .btn-secondary { background: #5a6275; color: #e8eaed; }
+        .btn-secondary:hover { background: #6b7289; transform: translateY(-2px); }
+        .share-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(42, 45, 58, 0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+        .modal-content { background: #3d4155; border-radius: 16px; padding: 1.5rem; max-width: 350px; width: 100%; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .modal-title { font-size: 1.1rem; font-weight: 700; color: #e8eaed; }
+        .close-btn { background: #5a6275; border: none; color: #e8eaed; font-size: 1.1rem; cursor: pointer; width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .close-btn:hover { background: #6b7289; }
+        .share-option { margin-bottom: 1rem; }
+        .checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: #e8eaed; }
+        .checkbox { width: 1rem; height: 1rem; accent-color: #dda15e; }
+        .share-buttons { display: flex; flex-direction: column; gap: 0.5rem; }
+        .share-btn { padding: 0.75rem; border: none; border-radius: 8px; font-family: inherit; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.75rem; color: white; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 0.9rem; }
+        .whatsapp { background: #25d366; }
+        .facebook { background: #4267b2; }
+        .instagram { background: #e4405f; }
+        .share-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); }
+        .success-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(42, 45, 58, 0.9); z-index: 2000; }
+        .graduation-icon { font-size: 4rem; color: #dda15e; animation: bounce 1s infinite; }
+        .hidden { display: none !important; }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-30px); } 60% { transform: translateY(-15px); } }
+        @media (min-width: 768px) { .container { padding: 1rem; } .header { padding: 1.5rem 1rem 2rem; } .header-controls { position: absolute; top: 1rem; left: 1rem; } }
+        @media (max-width: 768px) { .frame-options { grid-template-columns: 1fr; max-width: 300px; } .frame-selector { flex-direction: column; gap: 0.75rem; } .frame-selector span { margin-right: 0; } .action-buttons { flex-direction: column; } .upload-area.small { flex-direction: column; gap: 0.75rem; } .upload-area.small .upload-content { flex-direction: column; } .upload-area.small .upload-icon { font-size: 1.5rem; } .upload-area.small .upload-text { font-size: 1rem; } .canvas-area { flex-direction: column; align-items: center; } .canvas-container.individual { width: 280px; height: 280px; } .canvas-container.group { width: 350px; height: 197px; } .controls-panel { min-width: 200px; } .header-controls { position: static; justify-content: center; margin-bottom: 0.75rem; } .position-controls.top { top: -30px; } .position-controls.bottom { bottom: -30px; } .position-controls.left { left: -30px; } .position-controls.right { right: -30px; } .position-btn { width: 25px; height: 25px; font-size: 0.7rem; } }
+        @media (max-width: 480px) { .main-title { font-size: 1.3rem; } .canvas-container.individual { width: 250px; height: 250px; } .canvas-container.group { width: 300px; height: 169px; } .frame-option { width: 50px; height: 50px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-controls">
+                <button class="back-button hidden" id="backButton">
+                    <span>←</span>
+                    <span data-key="back">Back</span>
+                </button>
+                <div class="lang-switch">
+                    <button class="lang-btn active" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="ar">AR</button>
+                </div>
+            </div>
+            <h1 class="main-title" data-key="title">AUC Graduation Frame</h1>
+            <p class="subtitle" data-key="subtitle">Create your perfect graduation memory</p>
+        </header>
+        <div class="selection-section" id="selectionSection">
+            <div class="frame-options">
+                <div class="option-card" data-type="individual">
+                    <div class="card-icon">🎓</div>
+                    <h3 data-key="individual">Individual Photo</h3>
+                    <p data-key="individual_desc">For single graduates</p>
+                </div>
+                <div class="option-card" data-type="group">
+                    <div class="card-icon">👨‍🎓</div>
+                    <h3 data-key="group">Group Photo</h3>
+                    <p data-key="group_desc">For groups and friends</p>
+                </div>
+            </div>
+        </div>
+        <div class="editor-section hidden" id="editorSection">
+            <div class="editor-content">
+                <div class="controls-top">
+                    <div class="frame-selector" id="frameSelector">
+                        <span data-key="choose_frame">Choose Frame:</span>
+                        <div id="frameOptions"></div>
+                    </div>
+                </div>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <div class="upload-icon">📤</div>
+                        <div>
+                            <p class="upload-text" data-key="upload_text">Click to upload your photo</p>
+                            <span class="upload-subtext" data-key="upload_subtext">or drag and drop here</span>
+                        </div>
+                    </div>
+                    <div class="file-info hidden" id="fileInfo"></div>
+                    <div class="upload-actions hidden" id="uploadActions">
+                        <button class="upload-btn primary" id="changeImageBtn">
+                            <span>🔄</span>
+                            <span data-key="change_image">Change</span>
+                        </button>
+                    </div>
+                    <input type="file" id="imageUpload" accept="image/*" hidden>
+                </div> <br>
+                <div class="canvas-area hidden" id="canvasArea">
+                    <div class="canvas-wrapper">
+                        <div class="canvas-container" id="canvasContainer">
+                            <div class="image-layer" id="imageLayer">
+                                <img id="uploadedImage" src="" alt="">
+                            </div>
+                            <div class="frame-layer">
+                                <img id="currentFrame" src="" alt="Frame">
+                            </div>
+                        </div>
+                        <div class="position-controls top">
+                            <button class="position-btn" id="moveUp">↑</button>
+                        </div>
+                        <div class="position-controls bottom">
+                            <button class="position-btn" id="moveDown">↓</button>
+                        </div>
+                        <div class="position-controls left">
+                            <button class="position-btn" id="moveLeft">←</button>
+                        </div>
+                        <div class="position-controls right">
+                            <button class="position-btn" id="moveRight">→</button>
+                        </div>
+                    </div>
+                    <div class="controls-panel">
+                        <div class="control-group">
+                            <label class="control-label" data-key="zoom">Zoom</label>
+                            <input type="range" class="control-slider" id="scaleSlider" min="0.5" max="3" step="0.1" value="1">
+                        </div>
+                    </div>
+                </div><br>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="downloadBtn">
+                        <span>⬇️</span>
+                        <span data-key="download">Download</span>
+                    </button>
+                    <button class="btn btn-secondary" id="shareBtn">
+                        <span>📤</span>
+                        <span data-key="share">Share</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="share-modal hidden" id="shareModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" data-key="share_image">Share Image</h3>
+                    <button class="close-btn" id="closeModal">✕</button>
+                </div>
+                <div class="share-option">
+                    <label class="checkbox-label">
+                        <input type="checkbox" class="checkbox" id="includeLink">
+                        <span data-key="include_link">Include website link</span>
+                    </label>
+                </div>
+                <div class="share-buttons">
+                    <button class="share-btn whatsapp" id="shareWhatsapp">
+                        <span>💬</span>
+                        <span>WhatsApp</span>
+                    </button>
+                    <button class="share-btn facebook" id="shareFacebook">
+                        <span>📘</span>
+                        <span>Facebook</span>
+                    </button>
+                    <button class="share-btn instagram" id="shareInstagram">
+                        <span>📷</span>
+                        <span>Instagram</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="success-animation hidden" id="successAnimation">
+            <div class="graduation-icon">🎓</div>
+        </div>
+    </div>
+    <script>
+        const translations = {
+            en: {
+                title: "AUC Graduation Frame",
+                subtitle: "Create your perfect graduation memory",
+                individual: "Individual Photo",
+                individual_desc: "For single graduates",
+                group: "Group Photo",
+                group_desc: "For groups and friends",
+                back: "Back",
+                choose_frame: "Choose Frame:",
+                upload_text: "Click to upload your photo",
+                upload_subtext: "or drag and drop here",
+                change_image: "Change",
+                zoom: "Zoom",
+                position: "Position",
+                download: "Download",
+                share: "Share",
+                share_image: "Share Image",
+                include_link: "Include website link"
+            },
+            ar: {
+                title: "إطار تخرج AUC",
+                subtitle: "اصنع ذكرى تخرجك المثالية",
+                individual: "صورة فردية",
+                individual_desc: "للطلاب المتخرجين",
+                group: "صورة جماعية",
+                group_desc: "للمجموعات والأصدقاء",
+                back: "العودة",
+                choose_frame: "اختر الإطار:",
+                upload_text: "اضغط لرفع صورتك",
+                upload_subtext: "أو اسحب الصورة هنا",
+                change_image: "تغيير",
+                zoom: "التكبير",
+                position: "الموضع",
+                download: "تحميل",
+                share: "مشاركة",
+                share_image: "مشاركة الصورة",
+                include_link: "إضافة رابط الموقع"
+            }
+        };
+        class GraduationFrameEditor {
+            constructor() {
+                this.currentLang = 'en';
+                this.currentType = null;
+                this.currentFrame = 'frame1';
+                this.uploadedImage = null;
+                this.canvas = document.createElement('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.frames = {
+                    individual: [
+                        { id: 'frame1', src: 'IMG_5253.PNG', width: 2763, height: 2762 },
+                        { id: 'frame2', src: 'IMG_5255.PNG', width: 2763, height: 2762 },
+                        { id: 'frame3', src: 'IMG_5234.PNG', width: 2763, height: 2762 },
+                        { id: 'frame4', src: 'IMG_5236.PNG', width: 2161, height: 2161 }
+                    ],
+                    group: [
+                        { id: 'frame1', src: 'IMG_5254.PNG', width: 3841, height: 2161 },
+                        { id: 'frame2', src: 'IMG_5235.PNG', width: 3841, height: 2161 }
+                    ]
+                };
+                this.transform = { scale: 1, x: 0, y: 0 };
+                this.currentFileName = '';
+                this.init();
+            }
+            init() {
+                this.bindEvents();
+                this.updateLanguage();
+            }
+            bindEvents() {
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.addEventListener('click', () => this.switchLanguage(btn.dataset.lang));
+                });
+                document.querySelectorAll('.option-card').forEach(card => {
+                    card.addEventListener('click', () => this.selectType(card.dataset.type));
+                });
+                document.getElementById('backButton').addEventListener('click', () => this.goBack());
+                const uploadArea = document.getElementById('uploadArea');
+                const imageUpload = document.getElementById('imageUpload');
+                uploadArea.addEventListener('click', (e) => {
+                    if (!e.target.closest('#uploadActions')) {
+                        imageUpload.click();
+                    }
+                });
+                uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
+                uploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+                uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
+                imageUpload.addEventListener('change', (e) => this.handleImageUpload(e));
+                document.getElementById('changeImageBtn').addEventListener('click', () => {
+                    imageUpload.click();
+                });
+                document.getElementById('scaleSlider').addEventListener('input', () => this.updateTransform());
+                document.getElementById('moveLeft').addEventListener('click', () => this.moveImage(-5, 0));
+                document.getElementById('moveRight').addEventListener('click', () => this.moveImage(5, 0));
+                document.getElementById('moveUp').addEventListener('click', () => this.moveImage(0, -5));
+                document.getElementById('moveDown').addEventListener('click', () => this.moveImage(0, 5));
+                document.getElementById('downloadBtn').addEventListener('click', () => this.download());
+                document.getElementById('shareBtn').addEventListener('click', () => this.openShareModal());
+                document.getElementById('closeModal').addEventListener('click', () => this.closeShareModal());
+                document.getElementById('shareWhatsapp').addEventListener('click', () => this.shareToSocial('whatsapp'));
+                document.getElementById('shareFacebook').addEventListener('click', () => this.shareToSocial('facebook'));
+                document.getElementById('shareInstagram').addEventListener('click', () => this.shareToSocial('instagram'));
+            }
+            switchLanguage(lang) {
+                this.currentLang = lang;
+                document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-lang="${lang}"]`).classList.add('active');
+                document.body.classList.toggle('rtl', lang === 'ar');
+                this.updateLanguage();
+            }
+            updateLanguage() {
+                document.querySelectorAll('[data-key]').forEach(el => {
+                    const key = el.dataset.key;
+                    if (translations[this.currentLang][key]) {
+                        el.textContent = translations[this.currentLang][key];
+                    }
+                });
+            }
+            selectType(type) {
+                this.currentType = type;
+                this.currentFrame = 'frame1';
+                document.getElementById('selectionSection').classList.add('hidden');
+                document.getElementById('editorSection').classList.remove('hidden');
+                document.getElementById('backButton').classList.remove('hidden');
+                this.setupFrameOptions();
+                this.updateCanvasSize();
+                this.updateFrame();
+            }
+            setupFrameOptions() {
+                const container = document.getElementById('frameOptions');
+                container.innerHTML = '';
+                this.frames[this.currentType].forEach((frame, index) => {
+                    const option = document.createElement('div');
+                    option.className = `frame-option ${index === 0 ? 'active' : ''}`;
+                    option.dataset.frame = frame.id;
+                    option.innerHTML = `<img src="${frame.src}" alt="Frame ${index + 1}">`;
+                    option.addEventListener('click', () => this.selectFrame(frame.id));
+                    container.appendChild(option);
+                });
+            }
+            updateCanvasSize() {
+                const canvasContainer = document.getElementById('canvasContainer');
+                canvasContainer.className = `canvas-container ${this.currentType}`;
+            }
+            selectFrame(frameId) {
+                this.currentFrame = frameId;
+                document.querySelectorAll('.frame-option').forEach(opt => opt.classList.remove('active'));
+                document.querySelector(`[data-frame="${frameId}"]`).classList.add('active');
+                this.updateFrame();
+                if (this.uploadedImage) {
+                    this.fitImage();
+                }
+            }
+            updateFrame() {
+                const frame = this.frames[this.currentType].find(f => f.id === this.currentFrame);
+                document.getElementById('currentFrame').src = frame.src;
+            }
+            goBack() {
+                document.getElementById('editorSection').classList.add('hidden');
+                document.getElementById('selectionSection').classList.remove('hidden');
+                document.getElementById('backButton').classList.add('hidden');
+                this.reset();
+            }
+            reset() {
+                this.uploadedImage = null;
+                this.currentFileName = '';
+                document.getElementById('canvasArea').classList.add('hidden');
+                document.getElementById('uploadedImage').src = '';
+                document.getElementById('fileInfo').classList.add('hidden');
+                document.getElementById('uploadActions').classList.add('hidden');
+                const uploadArea = document.getElementById('uploadArea');
+                uploadArea.classList.remove('small');
+                this.transform = { scale: 1, x: 0, y: 0 };
+                document.getElementById('scaleSlider').value = 1;
+            }
+            handleDragOver(e) {
+                e.preventDefault();
+                e.currentTarget.classList.add('dragover');
+            }
+            handleDragLeave(e) {
+                e.currentTarget.classList.remove('dragover');
+            }
+            handleDrop(e) {
+                e.preventDefault();
+                e.currentTarget.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.processImage(files[0]);
+                }
+            }
+            handleImageUpload(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    this.processImage(file);
+                }
+            }
+            processImage(file) {
+                this.currentFileName = file.name;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.uploadedImage = img;
+                        document.getElementById('uploadedImage').src = e.target.result;
+                        const uploadArea = document.getElementById('uploadArea');
+                        uploadArea.classList.add('small');
+                        const fileInfo = document.getElementById('fileInfo');
+                        fileInfo.innerHTML = `<span>✅</span> <span>${this.currentFileName}</span>`;
+                        fileInfo.classList.remove('hidden');
+                        document.getElementById('uploadActions').classList.remove('hidden');
+                        document.getElementById('canvasArea').classList.remove('hidden');
+                        this.fitImage();
+                        this.updateTransform();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            fitImage() {
+                this.transform = { scale: 1, x: 0, y: 0 };
+                document.getElementById('scaleSlider').value = 1;
+                this.updateTransform();
+            }
+            moveImage(deltaX, deltaY) {
+                this.transform.x += deltaX;
+                this.transform.y += deltaY;
+                this.updateTransform();
+            }
+            updateTransform() {
+                if (!this.uploadedImage) return;
+                this.transform.scale = parseFloat(document.getElementById('scaleSlider').value);
+                const img = document.getElementById('uploadedImage');
+                const transform = `translate(-50%, -50%) scale(${this.transform.scale}) translate(${this.transform.x}px, ${this.transform.y}px)`;
+                img.style.transform = transform;
+            }
+            async download() {
+                const dataURL = await this.renderImage();
+                const link = document.createElement('a');
+                link.download = `auc-graduation-${Date.now()}.png`;
+                link.href = dataURL;
+                link.click();
+                this.showSuccess();
+            }
+            async renderImage() {
+                const frame = this.frames[this.currentType].find(f => f.id === this.currentFrame);
+                this.canvas.width = frame.width;
+                this.canvas.height = frame.height;
+                this.ctx.fillStyle = 'white';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                if (this.uploadedImage) {
+                    const imgAspect = this.uploadedImage.width / this.uploadedImage.height;
+                    const canvasAspect = this.canvas.width / this.canvas.height;
+                    let drawWidth, drawHeight;
+                    if (imgAspect > canvasAspect) {
+                        drawHeight = this.canvas.height;
+                        drawWidth = drawHeight * imgAspect;
+                    } else {
+                        drawWidth = this.canvas.width;
+                        drawHeight = drawWidth / imgAspect;
+                    }
+                    drawWidth *= this.transform.scale;
+                    drawHeight *= this.transform.scale;
+                    const x = (this.canvas.width - drawWidth) / 2 + this.transform.x * 2;
+                    const y = (this.canvas.height - drawHeight) / 2 + this.transform.y * 2;
+                    this.ctx.drawImage(this.uploadedImage, x, y, drawWidth, drawHeight);
+                }
+                return new Promise((resolve) => {
+                    const frameImg = new Image();
+                    frameImg.onload = () => {
+                        this.ctx.drawImage(frameImg, 0, 0, this.canvas.width, this.canvas.height);
+                        resolve(this.canvas.toDataURL('image/png'));
+                    };
+                    frameImg.src = frame.src;
+                });
+            }
+            showSuccess() {
+                const animation = document.getElementById('successAnimation');
+                animation.classList.remove('hidden');
+                setTimeout(() => animation.classList.add('hidden'), 2000);
+            }
+            openShareModal() {
+                document.getElementById('shareModal').classList.remove('hidden');
+            }
+            closeShareModal() {
+                document.getElementById('shareModal').classList.add('hidden');
+            }
+            async shareToSocial(platform) {
+                const dataURL = await this.renderImage();
+                const includeLink = document.getElementById('includeLink').checked;
+                const text = this.currentLang === 'ar' ? 
+                    `احتفل معي بتخرجي من AUC! 🎓${includeLink ? '\n\nأنشئ إطارك الخاص: ' + window.location.origin : ''}` :
+                    `Celebrating my graduation from AUC! 🎓${includeLink ? '\n\nCreate your own frame: ' + window.location.origin : ''}`;
+                if (platform === 'whatsapp') {
+                    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                    window.open(url, '_blank');
+                } else if (platform === 'facebook') {
+                    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}&quote=${encodeURIComponent(text)}`;
+                    window.open(url, '_blank');
+                } else if (platform === 'instagram') {
+                    const link = document.createElement('a');
+                    link.download = `auc-graduation-instagram-${Date.now()}.png`;
+                    link.href = dataURL;
+                    link.click();
+                    setTimeout(() => {
+                        alert(this.currentLang === 'ar' ? 
+                            'تم تحميل الصورة! يمكنك الآن رفعها على Instagram' : 
+                            'Image downloaded! You can now upload it to Instagram');
+                    }, 500);
+                }
+                this.closeShareModal();
+                this.showSuccess();
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            new GraduationFrameEditor();
+        });
+    </script>
+</body>
+</html>
